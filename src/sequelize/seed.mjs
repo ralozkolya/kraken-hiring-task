@@ -4,7 +4,7 @@ import Bluebird from 'bluebird';
 import { fileURLToPath } from 'url';
 import { User, Transaction } from './index.mjs';
 
-const filename = fileURLToPath(import.meta.url);
+const dirName = dirname(fileURLToPath(import.meta.url));
 
 export default async () => {
 
@@ -14,32 +14,24 @@ export default async () => {
     transactionSet1,
     transactionSet2,
   ] = await Bluebird.all([
-    readFile(resolve(dirname(filename), '../data/users.json')),
-    readFile(resolve(dirname(filename), '../data/transactions-1.json')),
-    readFile(resolve(dirname(filename), '../data/transactions-2.json')),
+    readFile(resolve(dirName, '../data/users.json')),
+    readFile(resolve(dirName, '../data/transactions-1.json')),
+    readFile(resolve(dirName, '../data/transactions-2.json')),
   ]).map(JSON.parse);
 
   // Insert users into DB
-  await Bluebird.each(users, user => {
-    return User.upsert({
-      address: user.address,
-      name: user.name
-    }, {
-      fields: []
-    });
-  });
+  await Bluebird.each(users, user => User.upsert({
+    address: user.address,
+    name: user.name
+  }, { fields: [] }));
 
   const transactions = transactionSet1.transactions.concat(transactionSet2.transactions);
 
   // Insert transactions into DB
-  await Bluebird.each(transactions, transaction => {
-    return Transaction.upsert({
-      txid: transaction.txid,
-      address: transaction.address,
-      amount: transaction.amount,
-      confirmations: transaction.confirmations,
-    }, {
-      fields: []
-    })
-  });
+  await Bluebird.each(transactions, transaction => Transaction.upsert({
+    txid: transaction.txid,
+    address: transaction.address,
+    amount: transaction.amount,
+    confirmations: transaction.confirmations,
+  }, { fields: [] }));
 };
