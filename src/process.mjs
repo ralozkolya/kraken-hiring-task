@@ -56,6 +56,7 @@ export const process = async () => {
         [ Op.gt ]: 0,
       }
     },
+    raw: true
   });
 
   /**
@@ -79,6 +80,7 @@ export const process = async () => {
         [ Op.gt ]: 0,
       }
     },
+    raw: true
   });
 
   /**
@@ -101,10 +103,7 @@ export const process = async () => {
       console.log(`Deposited for ${deposit.name}: count=${deposit.count} sum=${format(deposit.sum)}`)
     });
 
-  const plainNoReference = noReference.get({ plain: true });
-  const plainMinMax = minMax.get({ plain: true });
-
-  console.log(`Deposited without reference: count=${plainNoReference.count} sum=${format(plainNoReference.sum)}`);
-  console.log(`Smallest valid deposit: ${format(plainMinMax.min)}`);
-  console.log(`Largest valid deposit: ${format(plainMinMax.max)}`);
+  console.log(`Deposited without reference: count=${noReference.count} sum=${format(noReference.sum)}`);
+  console.log(`Smallest valid deposit: ${format(minMax.min)}`);
+  console.log(`Largest valid deposit: ${format(minMax.max)}`);
 };
