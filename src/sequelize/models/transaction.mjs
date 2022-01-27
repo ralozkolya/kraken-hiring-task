@@ -16,7 +16,6 @@ Transaction.init({
   amount: {
     type: DataTypes.DECIMAL(15, 8),
     allowNull: false,
-    defaultValue: 0,
   },
   confirmations: {
     type: DataTypes.INTEGER,
@@ -24,8 +23,6 @@ Transaction.init({
   },
 }, {
   sequelize,
-  tableName: 'transactions',
-  modelName: 'Transaction',
   timestamps: false,
   indexes: [
     { fields: [ 'address' ] },
