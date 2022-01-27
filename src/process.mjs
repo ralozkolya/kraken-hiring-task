@@ -67,7 +67,7 @@ export const process = async () => {
       /**
        * I'm assuming here that valid deposits refer to all the deposits,
        * not just from the known users. Another assumption here is that
-       * zero-amount transactions are not valid
+       * transactions with zero or negative amount are not valid
        */
       confirmations: {
         [ Op.gt ]: 5,
@@ -80,7 +80,7 @@ export const process = async () => {
 
   /**
    * Pretty sure the order shouldn't matter, but just to
-   * be on the safe side,lets match with README.md order
+   * be on the safe side, lets match with README order
    */
   const order = [
     'mvd6qFeVkqH6MNAS2Y2cLifbdaX5XUkbZJ',
@@ -95,9 +95,9 @@ export const process = async () => {
   deposits
     .sort((a, b) => order.indexOf(a.address) - order.indexOf(b.address))
     .forEach(deposit => {
-    const plain = deposit.get({ plain: true });
-    console.log(`Deposited for ${userMap[plain.address].name}: count=${plain.count} sum=${format(plain.sum)}`)
-  });
+      const plain = deposit.get({ plain: true });
+      console.log(`Deposited for ${userMap[plain.address].name}: count=${plain.count} sum=${format(plain.sum)}`)
+    });
 
   const plainNoReference = noReference.get({ plain: true });
   const plainMinMax = minMax.get({ plain: true });
