@@ -1,6 +1,18 @@
-import sequelize from 'sequelize';
-import { Op } from 'sequelize';
-import s, { User, Transaction } from './sequelize/index.mjs';
+import sequelize, { Op } from 'sequelize';
+import { User, Transaction } from './sequelize/index.mjs';
+
+const format = number => {
+  /**
+  * Although toFixed rounds the value to the nearest corresponding decimal,
+  * in this case it's exactly what we need to remove floating point arithemtic
+  * rounding error. That's the specifics of SQLite without decimal_sum
+  * extension, and other DBMSes shouldn't have this issue. For this task I went
+  * ahead with SQLite as it allows for no-configuration in-memory operation.
+  * In real production environment, I'd choose more feature-rich DBMS, like
+  * Postgres or MySQL.
+  */
+  return Number(number).toFixed(8);
+};
 
 export const process = async () => {
 
@@ -46,38 +58,51 @@ export const process = async () => {
     },
   });
 
-
-  let smallest = Infinity;
-  let largest = -Infinity;
-  deposits.forEach(deposit => {
-
-    const plain = deposit.get({ plain: true });
-
-    if (plain.sum < smallest) {
-      smallest = plain.sum;
-    }
-
-    if (plain.sum > largest) {
-      largest = plain.sum;
-    }
-
-    console.log(`Deposited for ${userMap[plain.address].name}: count=${plain.count} sum=${plain.sum}`)
+  const minMax = await Transaction.findAll({
+    attributes: [
+      [ sequelize.fn('min', sequelize.col('amount')), 'min' ],
+      [ sequelize.fn('max', sequelize.col('amount')), 'max' ],
+    ],
+    where: {
+      /**
+       * I'm assuming here that valid deposits refer to all the deposits,
+       * not just from the known users. Another assumption here is that
+       * zero-amount transactions are not valid
+       */
+      confirmations: {
+        [ Op.gt ]: 5,
+      },
+      amount: {
+        [ Op.gt ]: 0,
+      }
+    },
   });
 
-  const plain = noReference[0].get({ plain: true });
+  /**
+   * Pretty sure the order shouldn't matter, but just to
+   * be on the safe side,lets match with README.md order
+   */
+  const order = [
+    'mvd6qFeVkqH6MNAS2Y2cLifbdaX5XUkbZJ',
+    'mmFFG4jqAtw9MoCC88hw5FNfreQWuEHADp',
+    'mzzg8fvHXydKs8j9D2a8t7KpSXpGgAnk4n',
+    '2N1SP7r92ZZJvYKG2oNtzPwYnzw62up7mTo',
+    'mutrAf4usv3HKNdpLwVD4ow2oLArL6Rez8',
+    'miTHhiX3iFhVnAEecLjybxvV5g8mKYTtnM',
+    'mvcyJMiAcSXKAEsQxbW9TYZ369rsMG6rVV',
+  ]
 
-  console.log(`Deposited without reference: count=${plain.count} sum=${plain.sum}`);
-  console.log(`Smallest valid deposit: ${smallest}`);
-  console.log(`Largest valid deposit: ${largest}`);
+  deposits
+    .sort((a, b) => order.indexOf(a.address) - order.indexOf(b.address))
+    .forEach(deposit => {
+    const plain = deposit.get({ plain: true });
+    console.log(`Deposited for ${userMap[plain.address].name}: count=${plain.count} sum=${format(plain.sum)}`)
+  });
+
+  const plainNoReference = noReference[0].get({ plain: true });
+  const plainMinMax = minMax[0].get({ plain: true });
+
+  console.log(`Deposited without reference: count=${plainNoReference.count} sum=${format(plainNoReference.sum)}`);
+  console.log(`Smallest valid deposit: ${format(plainMinMax.min)}`);
+  console.log(`Largest valid deposit: ${format(plainMinMax.max)}`);
 };
-
-// Deposited for Wesley Crusher: count=n sum=x.xxxxxxxx
-// Deposited for Leonard McCoy: count=n sum=x.xxxxxxxx
-// Deposited for Jonathan Archer: count=n sum=x.xxxxxxxx
-// Deposited for Jadzia Dax: count=n sum=x.xxxxxxxx
-// Deposited for Montgomery Scott: count=n sum=x.xxxxxxxx
-// Deposited for James T. Kirk: count=n sum=x.xxxxxxxx
-// Deposited for Spock: count=n sum=x.xxxxxxxx
-// Deposited without reference: count=n sum=x.xxxxxxxx
-// Smallest valid deposit: x.xxxxxxxx
-// Largest valid deposit: x.xxxxxxxx
