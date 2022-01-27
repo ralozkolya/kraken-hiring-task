@@ -1,4 +1,5 @@
-import sequelize, { Op } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
+import sequelize from './sequelize/base.mjs';
 import { User, Transaction } from './sequelize/index.mjs';
 
 const format = number => {
@@ -15,29 +16,23 @@ const format = number => {
 };
 
 export const process = async () => {
-
-  const users = await User.findAll();
-  const userMap = users.reduce((map, user) => {
-    map[user.address] = user;
-    return map;
-  }, {});
-
-  const deposits = await Transaction.findAll({
-    attributes: [
-      'address',
-      [ sequelize.fn('sum', sequelize.col('amount')), 'sum' ],
-      [ sequelize.fn('count', sequelize.col('txid')), 'count' ],
-    ],
-    where: {
-      address: Object.keys(userMap),
-      confirmations: {
-        [ Op.gt ]: 5,
-      },
-      amount: {
-        [ Op.gt ]: 0,
-      },
-    },
-    group: [ 'address' ],
+  /**
+   * It is notoriously difficult to create JOIN query with Sequelize, if
+   * there is no relation. Raw query seems to be the simplest workaround
+   */
+  const deposits = await sequelize.query(`
+    select u.address, u.name, sum(t.amount) as sum, count(t.txid) as count
+    from :users u
+    join :transactions t on t.address = u.address
+    where t.amount > 0
+      and t.confirmations > 5
+      group by u.address;
+  `, {
+    type: Sequelize.QueryTypes.SELECT,
+    replacements: {
+      users: User.tableName,
+      transactions: Transaction.tableName
+    }
   });
 
   const noReference = await Transaction.findOne({
@@ -47,7 +42,7 @@ export const process = async () => {
     ],
     where: {
       address: {
-        [ Op.not ]: Object.keys(userMap),
+        [ Op.not ]: deposits.map(deposit => deposit.address),
       },
       confirmations: {
         [ Op.gt ]: 5,
@@ -90,13 +85,12 @@ export const process = async () => {
     'mutrAf4usv3HKNdpLwVD4ow2oLArL6Rez8',
     'miTHhiX3iFhVnAEecLjybxvV5g8mKYTtnM',
     'mvcyJMiAcSXKAEsQxbW9TYZ369rsMG6rVV',
-  ]
+  ];
 
   deposits
     .sort((a, b) => order.indexOf(a.address) - order.indexOf(b.address))
     .forEach(deposit => {
-      const plain = deposit.get({ plain: true });
-      console.log(`Deposited for ${userMap[plain.address].name}: count=${plain.count} sum=${format(plain.sum)}`)
+      console.log(`Deposited for ${deposit.name}: count=${deposit.count} sum=${format(deposit.sum)}`)
     });
 
   const plainNoReference = noReference.get({ plain: true });
