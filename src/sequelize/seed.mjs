@@ -15,17 +15,22 @@ export default async () => {
     readFile('./data/transactions-2.json')
   ]).map(JSON.parse);
 
+  // Insert users into DB
   await Bluebird.each(users, user => {
     return User.findOrCreate({
       where: {
         address: user.address
       },
-      defaults: user
+      defaults: {
+        address: user.address,
+        name: user.name
+      }
     });
   });
 
   const transactions = transactionSet1.transactions.concat(transactionSet2.transactions);
 
+  // Insert transactions into DB
   await Bluebird.each(transactions, transaction => {
     return Transaction.findOrCreate({
       where: {
