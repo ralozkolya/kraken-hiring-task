@@ -40,7 +40,7 @@ export const process = async () => {
     group: [ 'address' ],
   });
 
-  const noReference = await Transaction.findAll({
+  const noReference = await Transaction.findOne({
     attributes: [
       [ sequelize.fn('sum', sequelize.col('amount')), 'sum' ],
       [ sequelize.fn('count', sequelize.col('txid')), 'count' ],
@@ -58,7 +58,7 @@ export const process = async () => {
     },
   });
 
-  const minMax = await Transaction.findAll({
+  const minMax = await Transaction.findOne({
     attributes: [
       [ sequelize.fn('min', sequelize.col('amount')), 'min' ],
       [ sequelize.fn('max', sequelize.col('amount')), 'max' ],
@@ -99,8 +99,8 @@ export const process = async () => {
     console.log(`Deposited for ${userMap[plain.address].name}: count=${plain.count} sum=${format(plain.sum)}`)
   });
 
-  const plainNoReference = noReference[0].get({ plain: true });
-  const plainMinMax = minMax[0].get({ plain: true });
+  const plainNoReference = noReference.get({ plain: true });
+  const plainMinMax = minMax.get({ plain: true });
 
   console.log(`Deposited without reference: count=${plainNoReference.count} sum=${format(plainNoReference.sum)}`);
   console.log(`Smallest valid deposit: ${format(plainMinMax.min)}`);
