@@ -21,14 +21,11 @@ export default async () => {
 
   // Insert users into DB
   await Bluebird.each(users, user => {
-    return User.findOrCreate({
-      where: {
-        address: user.address
-      },
-      defaults: {
-        address: user.address,
-        name: user.name
-      }
+    return User.upsert({
+      address: user.address,
+      name: user.name
+    }, {
+      fields: []
     });
   });
 
@@ -36,17 +33,13 @@ export default async () => {
 
   // Insert transactions into DB
   await Bluebird.each(transactions, transaction => {
-    return Transaction.findOrCreate({
-      where: {
-        // txid is unique and duplicate instances can be ignored
-        txid: transaction.txid,
-      },
-      defaults: {
-        txid: transaction.txid,
-        address: transaction.address,
-        amount: transaction.amount,
-        confirmations: transaction.confirmations,
-      }
+    return Transaction.upsert({
+      txid: transaction.txid,
+      address: transaction.address,
+      amount: transaction.amount,
+      confirmations: transaction.confirmations,
+    }, {
+      fields: []
     })
   });
 };
