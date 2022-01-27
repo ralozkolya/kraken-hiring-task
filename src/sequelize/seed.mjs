@@ -23,7 +23,7 @@ export default async () => {
   await Bluebird.each(users, user => User.upsert({
     address: user.address,
     name: user.name
-  }, { fields: [] }));
+  }, { fields: [] })); // Empty fields creates DO NOTHING query
 
   const transactions = transactionSet1.transactions.concat(transactionSet2.transactions);
 
@@ -33,5 +33,5 @@ export default async () => {
     address: transaction.address,
     amount: transaction.amount,
     confirmations: transaction.confirmations,
-  }, { fields: [] }));
+  }, { fields: [] })); // Empty fields creates DO NOTHING query
 };
