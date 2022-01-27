@@ -19,6 +19,8 @@ export const process = async () => {
   /**
    * It is notoriously difficult to create JOIN query with Sequelize, if
    * there is no relation. Raw query seems to be the simplest workaround
+   * 
+   * Query all the valid transactions associated with a known user
    */
   const deposits = await sequelize.query(`
     select u.address, u.name, sum(t.amount) as sum, count(t.txid) as count
@@ -35,6 +37,9 @@ export const process = async () => {
     }
   });
 
+  /**
+   * Query all valid transactions without reference
+   */
   const noReference = await Transaction.findOne({
     attributes: [
       [ sequelize.fn('sum', sequelize.col('amount')), 'sum' ],
@@ -53,6 +58,9 @@ export const process = async () => {
     },
   });
 
+  /**
+   * Query the smallest and the largest valid transactions
+   */
   const minMax = await Transaction.findOne({
     attributes: [
       [ sequelize.fn('min', sequelize.col('amount')), 'min' ],
