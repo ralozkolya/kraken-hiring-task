@@ -1,6 +1,10 @@
 import { readFile } from 'fs/promises';
+import { resolve, dirname } from 'path';
 import Bluebird from 'bluebird';
+import { fileURLToPath } from 'url';
 import { User, Transaction } from './index.mjs';
+
+const filename = fileURLToPath(import.meta.url);
 
 export default async () => {
 
@@ -8,11 +12,11 @@ export default async () => {
   const [
     users,
     transactionSet1,
-    transactionSet2
+    transactionSet2,
   ] = await Bluebird.all([
-    readFile('./data/users.json'),
-    readFile('./data/transactions-1.json'),
-    readFile('./data/transactions-2.json')
+    readFile(resolve(dirname(filename), '../data/users.json')),
+    readFile(resolve(dirname(filename), '../data/transactions-1.json')),
+    readFile(resolve(dirname(filename), '../data/transactions-2.json')),
   ]).map(JSON.parse);
 
   // Insert users into DB
