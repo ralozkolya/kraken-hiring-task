@@ -6,4 +6,4 @@ COPY src .
 
 RUN npm i
 
-CMD [ "node", "app.mjs" ]
+CMD [ "node", "index.mjs" ]
