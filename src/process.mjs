@@ -26,9 +26,8 @@ export const process = async () => {
     select u.address, u.name, sum(t.amount) as sum, count(t.txid) as count
     from :users u
     join :transactions t on t.address = u.address
-    where t.amount > 0
-      and t.confirmations > 5
-      group by u.address;
+    where t.amount > 0 and t.confirmations > 5
+    group by u.address;
   `, {
     type: Sequelize.QueryTypes.SELECT,
     replacements: {
